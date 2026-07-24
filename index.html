@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vector Line 3D - Cooperative Edition</title>
+
+    <!-- 👇 AQUÍ DEBES PONER LA ETIQUETA DEL FAVICON 👇 -->
+    <link rel="icon" type="image/x-icon" href="favicon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+    
+    <!-- Resto del código... -->
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Pixelify Sans', 'Courier New', monospace, sans-serif !important;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            image-rendering: -moz-crisp-edges;
+            cursor: default;
+        }
+
+        #menuOverlay, #gameOverOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #menuOverlay.hidden, #gameOverOverlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .menu-title {
+            font-size: 38px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+            border-bottom: 4px solid #000;
+            padding-bottom: 8px;
+            text-shadow: 2px 2px 0px #fff;
+        }
+
+        .menu-btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 320px;
+        }
+
+        .pixel-btn {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #000;
+            background-color: #fff;
+            border: 3px solid #000;
+            padding: 12px 18px;
+            cursor: pointer;
+            text-transform: uppercase;
+            text-align: center;
+            box-shadow: 4px 4px 0px #000;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease, color 0.1s ease;
+            outline: none;
+        }
+
+        .pixel-btn:hover {
+            background-color: #000;
+            color: #fff;
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #000;
+        }
+
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        .pixel-setting-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            border: 3px solid #000;
+            padding: 10px 14px;
+            box-shadow: 4px 4px 0px #000;
+            width: 100%;
+        }
+
+        .pixel-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .pixel-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border: 2px solid #000;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .pixel-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #000;
+            border: 2px solid #fff;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        #coopHUD {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 6;
+            display: none;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            pointer-events: none;
+        }
+
+        .hud-badge {
+            background: #fff;
+            border: 3px solid #000;
+            padding: 6px 12px;
+            box-shadow: 3px 3px 0px #000;
+            font-size: 15px;
+            font-weight: 700;
+            color: #000;
+            text-transform: uppercase;
+        }
+
+        #menuToggleBtn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 5;
+            font-size: 15px;
+            font-weight: 700;
+            color: #000;
+            background: #fff;
+            border: 3px solid #000;
+            padding: 8px 14px;
+            cursor: pointer;
+            box-shadow: 3px 3px 0px #000;
+            display: none;
+        }
+
+        #mobileControls {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 5;
+            display: none;
+            gap: 12px;
+            flex-direction: row;
+        }
+
+        .action-btn {
+            width: 58px;
+            height: 58px;
+            font-size: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-shadow: 3px 3px 0px #000;
+        }
+
+        .controls-info {
+            font-size: 11px;
+            color: #000;
+            margin-top: 14px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px;
+            border: 3px solid #000;
+            box-shadow: 3px 3px 0px #000;
+            max-width: 340px;
+            line-height: 1.35;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <button id="menuToggleBtn">MENÚ [ESC]</button>
+
+    <div id="mobileControls">
+        <button class="pixel-btn action-btn" id="shootTouchBtn" title="Disparar">⚡</button>
+        <button class="pixel-btn action-btn" id="clearTouchBtn" title="Limpiar Línea">🧹</button>
+    </div>
+
+    <!-- Main Menu Overlay -->
+    <div id="menuOverlay">
+        <div class="menu-title">VECTOR LINE 3D<br><span id="menuSubtitle" style="font-size: 20px; color: #008844;">COOPERATIVO</span></div>
+        <div class="menu-btn-container">
+            <button class="pixel-btn" id="modeToggleBtn" style="font-size: 16px; background: #eef2ff;">🎮 JUGADORES: 2 JUGADORES (2P)</button>
+            <button class="pixel-btn" id="gameTypeToggleBtn" style="font-size: 16px; background: #fff2e6; color: #d9534f; border-color: #d9534f;">⚔️ TIPO: COOPERATIVO</button>
+            <button class="pixel-btn" id="playCoopBtn" style="background: #002211; color: #00ff88; border-color: #00ff88; font-size: 18px;">🚀 INICIAR JUEGO</button>
+            
+            <div class="pixel-setting-container">
+                <label for="pixelSlider" class="pixel-label">CALIDAD / PIXELADO: <span id="pixelValue">4x</span></label>
+                <input type="range" id="pixelSlider" min="1" max="8" value="4" step="1" class="pixel-slider">
+            </div>
+        </div>
+        <div class="controls-info">
+            🎮 <b>Controles:</b><br>
+            <b>P1 (Blanco):</b> [WASD] Mover | [E] Disparar | [Espacio] Trail<br>
+            <b>P2 (Negro):</b> [Flechas] Mover | [M] Disparar | [N / Shift] Trail<br>
+            <b>P3 (Verde):</b> [5, 1, 2, 3] Mover | [0] Escudo | [.] Trail<br>
+            <b>P4 (Amarillo):</b> [I, J, K, L] Mover | [U] Disparar | [O] Explosivo | [P] Trail
+        </div>
+    </div>
+
+    <!-- In-Game Coop HUD -->
+    <div id="coopHUD">
+        <div class="hud-badge" id="hudWave">🤝 OLEADA: 1</div>
+        <div class="hud-badge" id="hudHp">P1: ❤️❤️❤️</div>
+        <div class="hud-badge" id="hudScore">PUNTOS: 0</div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="gameOverOverlay" class="hidden">
+        <div class="menu-title" id="goTitle">¡FIN DEL JUEGO!</div>
+        <div class="hud-badge" id="goScoreText" style="font-size: 18px; margin-bottom: 20px; white-space: pre-line; text-align: center;">OLEADA ALCANZADA: 1<br>PUNTAJE: 0</div>
+        <div class="menu-btn-container">
+            <button class="pixel-btn" id="retryCoopBtn" style="background: #000; color: #fff;">🔄 REINTENTAR</button>
+            <button class="pixel-btn" id="backToMenuBtn">🏠 MENÚ PRINCIPAL</button>
+        </div>
+    </div>
+
+    <script>
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        let pixelScale = 4;
+        const MAP_BOUNDARY = 35.0;
+        let lastTime = 0;
+        let selectedPlayerMode = '2P';
+        let selectedGameType = 'COOP'; // 'COOP', 'PVP_3LIVES', or 'PVP_INFINITE'
+
+        let coopWave = 1;
+        let coopScore = 0;
+        let p1CoopHp = 3;
+        let p2CoopHp = 3;
+        let p3CoopHp = 3;
+        let p4CoopHp = 3;
+
+        // Frags / Kills for PvP Infinito
+        let p1Frags = 0;
+        let p2Frags = 0;
+        let p3Frags = 0;
+        let p4Frags = 0;
+
+        // Respawn timers for PvP Infinito
+        let p1RespawnTimer = 0;
+        let p2RespawnTimer = 0;
+        let p3RespawnTimer = 0;
+        let p4RespawnTimer = 0;
+
+        let coopEnemies = [];
+        let coopEnemyProjectiles = [];
+        let waveTransitionTimer = 0;
+
+        let explosionParticles = [];
+        let explosionEffects = [];
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'shoot') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'clear') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'explosion') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.38);
+                    gain.gain.setValueAtTime(0.35, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.38);
+                    osc.start(now);
+                    osc.stop(now + 0.38);
+                }
+            } catch (e) {}
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        let gameState = 'MENU';
+        let gameMode = '1P';
+
+        const CUBE_SIZE = 0.8;
+        const BASE_SPEED = 6.0;
+        const MAX_SPEED = 16.8; 
+        const ACCELERATION_RATE = 14.0;
+        const SLIDE_DECELERATION = 4.5;
+
+        let p1 = {
+            id: 1,
+            baseColor: 0xffffff,
+            hitFlash: 0.0,
+            posX: -3.5,
+            posZ: 0,
+            currentSpeed: BASE_SPEED,
+            slideVelX: 0,
+            slideVelZ: 0,
+            activeDirX: 0,
+            activeDirZ: 0,
+            lastFacingX: 0,
+            lastFacingZ: -1,
+            mesh: null,
+            wireframe: null,
+            lineGeometry: null,
+            lineMesh: null,
+            trailPoints: []
+        };
+
+        let p2 = {
+            id: 2,
+            baseColor: 0x000000,
+            hitFlash: 0.0,
+            posX: 0,
+            posZ: 0,
+            currentSpeed: BASE_SPEED,
+            slideVelX: 0,
+            slideVelZ: 0,
+            activeDirX: 0,
+            activeDirZ: 0,
+            lastFacingX: 0,
+            lastFacingZ: -1,
+            mesh: null,
+            wireframe: null,
+            lineGeometry: null,
+            lineMesh: null,
+            trailPoints: []
+        };
+
+        let p3 = {
+            id: 3,
+            baseColor: 0x00ff88,
+            hitFlash: 0.0,
+            posX: 3.5,
+            posZ: 0,
+            currentSpeed: BASE_SPEED,
+            slideVelX: 0,
+            slideVelZ: 0,
+            activeDirX: 0,
+            activeDirZ: 0,
+            lastFacingX: 0,
+            lastFacingZ: -1,
+            mesh: null,
+            wireframe: null,
+            lineGeometry: null,
+            lineMesh: null,
+            trailPoints: [],
+            wallCooldownTimer: 0.0
+        };
+
+        let p4 = {
+            id: 4,
+            baseColor: 0xffd700,
+            hitFlash: 0.0,
+            posX: 6.0,
+            posZ: 0,
+            currentSpeed: BASE_SPEED,
+            slideVelX: 0,
+            slideVelZ: 0,
+            activeDirX: 0,
+            activeDirZ: 0,
+            lastFacingX: 0,
+            lastFacingZ: -1,
+            mesh: null,
+            wireframe: null,
+            lineGeometry: null,
+            lineMesh: null,
+            trailPoints: []
+        };
+
+        let activeWalls = [];
+        let scene, camera, renderer, gridHelper;
+        let ambientAngle = 0;
+        let projectiles = [];
+        let cameraZoomFactor = 1.0;
+
+        const keysPressed = {};
+
+        const menuOverlay = document.getElementById('menuOverlay');
+        const menuSubtitle = document.getElementById('menuSubtitle');
+        const modeToggleBtn = document.getElementById('modeToggleBtn');
+        const gameTypeToggleBtn = document.getElementById('gameTypeToggleBtn');
+        const playCoopBtn = document.getElementById('playCoopBtn');
+        const pixelSlider = document.getElementById('pixelSlider');
+        const pixelValue = document.getElementById('pixelValue');
+        const menuToggleBtn = document.getElementById('menuToggleBtn');
+        const mobileControls = document.getElementById('mobileControls');
+        const shootTouchBtn = document.getElementById('shootTouchBtn');
+        const clearTouchBtn = document.getElementById('clearTouchBtn');
+
+        function updateMenuUI() {
+            if (selectedGameType === 'COOP') {
+                menuSubtitle.innerText = 'COOPERATIVO';
+                menuSubtitle.style.color = '#008844';
+                gameTypeToggleBtn.innerText = '🤝 TIPO: COOPERATIVO';
+                gameTypeToggleBtn.style.background = '#eef2ff';
+                gameTypeToggleBtn.style.color = '#000';
+                gameTypeToggleBtn.style.borderColor = '#000';
+                playCoopBtn.innerText = '🤝 INICIAR COOPERATIVO';
+                playCoopBtn.style.background = '#002211';
+                playCoopBtn.style.color = '#00ff88';
+                playCoopBtn.style.borderColor = '#00ff88';
+            } else if (selectedGameType === 'PVP_3LIVES') {
+                menuSubtitle.innerText = 'PvP VERSUS (3 VIDAS)';
+                menuSubtitle.style.color = '#d9534f';
+                gameTypeToggleBtn.innerText = '⚔️ TIPO: PvP (3 VIDAS)';
+                gameTypeToggleBtn.style.background = '#fff2e6';
+                gameTypeToggleBtn.style.color = '#d9534f';
+                gameTypeToggleBtn.style.borderColor = '#d9534f';
+                playCoopBtn.innerText = '⚔️ INICIAR PvP (3 VIDAS)';
+                playCoopBtn.style.background = '#330000';
+                playCoopBtn.style.color = '#ff5555';
+                playCoopBtn.style.borderColor = '#ff5555';
+            } else if (selectedGameType === 'PVP_INFINITE') {
+                menuSubtitle.innerText = 'PvP INFINITO (RESPAWN & FRAGS)';
+                menuSubtitle.style.color = '#9900cc';
+                gameTypeToggleBtn.innerText = '♾️ TIPO: PvP INFINITO';
+                gameTypeToggleBtn.style.background = '#f3e8ff';
+                gameTypeToggleBtn.style.color = '#9900cc';
+                gameTypeToggleBtn.style.borderColor = '#9900cc';
+                playCoopBtn.innerText = '♾️ INICIAR PvP INFINITO';
+                playCoopBtn.style.background = '#2a0033';
+                playCoopBtn.style.color = '#d8b4fe';
+                playCoopBtn.style.borderColor = '#d8b4fe';
+            }
+        }
+
+        modeToggleBtn.addEventListener('click', () => {
+            if (selectedPlayerMode === '1P') {
+                selectedPlayerMode = '2P';
+                modeToggleBtn.innerText = '🎮 JUGADORES: 2 JUGADORES (2P)';
+            } else if (selectedPlayerMode === '2P') {
+                selectedPlayerMode = '3P';
+                modeToggleBtn.innerText = '🎮 JUGADORES: 3 JUGADORES (3P)';
+            } else if (selectedPlayerMode === '3P') {
+                selectedPlayerMode = '4P';
+                modeToggleBtn.innerText = '🎮 JUGADORES: 4 JUGADORES (4P)';
+            } else {
+                selectedPlayerMode = '1P';
+                modeToggleBtn.innerText = '🎮 JUGADORES: 1 JUGADOR (1P)';
+            }
+        });
+
+        gameTypeToggleBtn.addEventListener('click', () => {
+            if (selectedGameType === 'COOP') {
+                selectedGameType = 'PVP_3LIVES';
+                if (selectedPlayerMode === '1P') {
+                    selectedPlayerMode = '2P';
+                    modeToggleBtn.innerText = '🎮 JUGADORES: 2 JUGADORES (2P)';
+                }
+            } else if (selectedGameType === 'PVP_3LIVES') {
+                selectedGameType = 'PVP_INFINITE';
+                if (selectedPlayerMode === '1P') {
+                    selectedPlayerMode = '2P';
+                    modeToggleBtn.innerText = '🎮 JUGADORES: 2 JUGADORES (2P)';
+                }
+            } else {
+                selectedGameType = 'COOP';
+            }
+            updateMenuUI();
+        });
+
+        pixelSlider.addEventListener('input', (e) => {
+            pixelScale = parseInt(e.target.value, 10);
+            pixelValue.innerText = pixelScale === 1 ? '1x (HD)' : `${pixelScale}x`;
+            resizeRenderer();
+        });
+
+        playCoopBtn.addEventListener('click', () => startCoopMode());
+        retryCoopBtn.addEventListener('click', () => startCoopMode());
+        backToMenuBtn.addEventListener('click', () => openMenu());
+        menuToggleBtn.addEventListener('click', openMenu);
+
+        shootTouchBtn.addEventListener('click', () => shootProjectile(p1, 0xffffff, 0x000000));
+        clearTouchBtn.addEventListener('click', () => clearTrail(p1));
+
+        function createPlayerObject(player, baseColor, wireColor, lineColor) {
+            player.baseColor = baseColor;
+
+            const geo = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE);
+            const mat = new THREE.MeshBasicMaterial({ color: baseColor });
+            player.mesh = new THREE.Mesh(geo, mat);
+            player.mesh.position.set(player.posX, CUBE_SIZE / 2, player.posZ);
+
+            const edges = new THREE.EdgesGeometry(geo);
+            const wireMat = new THREE.LineBasicMaterial({ color: wireColor, linewidth: 2 });
+            player.wireframe = new THREE.LineSegments(edges, wireMat);
+            player.mesh.add(player.wireframe);
+
+            scene.add(player.mesh);
+
+            player.lineGeometry = new THREE.BufferGeometry();
+            const lineMat = new THREE.LineBasicMaterial({ color: lineColor, linewidth: 2 });
+            player.lineMesh = new THREE.Line(player.lineGeometry, lineMat);
+            player.lineMesh.frustumCulled = false;
+            scene.add(player.lineMesh);
+        }
+
+        function addTrailPoint(player, x, z) {
+            if (!player || !player.mesh) return;
+            player.trailPoints.push(new THREE.Vector3(x, CUBE_SIZE / 2, z));
+            if (player.trailPoints.length > 100) {
+                player.trailPoints.shift();
+            }
+            if (player.lineGeometry) {
+                player.lineGeometry.setFromPoints(player.trailPoints);
+            }
+        }
+
+        function clearTrail(player) {
+            if (!player) return;
+            player.trailPoints = [];
+            if (player.lineGeometry) {
+                player.lineGeometry.setFromPoints([]);
+            }
+            playSound('clear');
+        }
+
+        function shootProjectile(player, baseColor, wireColor) {
+            if (!player || !player.mesh || !player.mesh.visible) return;
+            let dirX = player.activeDirX;
+            let dirZ = player.activeDirZ;
+            if (dirX === 0 && dirZ === 0) {
+                dirX = player.lastFacingX;
+                dirZ = player.lastFacingZ;
+            }
+            const len = Math.hypot(dirX, dirZ);
+            if (len > 0) {
+                dirX /= len;
+                dirZ /= len;
+            } else {
+                dirZ = -1;
+            }
+
+            const geo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+            const mat = new THREE.MeshBasicMaterial({ color: baseColor });
+            const mesh = new THREE.Mesh(geo, mat);
+
+            const edges = new THREE.EdgesGeometry(geo);
+            const wireMat = new THREE.LineBasicMaterial({ color: wireColor, linewidth: 2 });
+            mesh.add(new THREE.LineSegments(edges, wireMat));
+
+            mesh.position.set(player.posX + dirX * 0.8, CUBE_SIZE / 2, player.posZ + dirZ * 0.8);
+            scene.add(mesh);
+
+            projectiles.push({
+                ownerId: player.id,
+                mesh: mesh,
+                dirX: dirX,
+                dirZ: dirZ,
+                speed: 28.0,
+                life: 2.5,
+                isExplosive: false
+            });
+
+            playSound('shoot');
+        }
+
+        function shootExplosiveProjectile(player) {
+            if (!player || !player.mesh || !player.mesh.visible) return;
+
+            let dirX = player.activeDirX;
+            let dirZ = player.activeDirZ;
+            if (dirX === 0 && dirZ === 0) {
+                dirX = player.lastFacingX;
+                dirZ = player.lastFacingZ;
+            }
+            const len = Math.hypot(dirX, dirZ);
+            if (len > 0) {
+                dirX /= len;
+                dirZ /= len;
+            } else {
+                dirZ = -1;
+            }
+
+            const geo = new THREE.DodecahedronGeometry(0.35);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+            const mesh = new THREE.Mesh(geo, mat);
+
+            const edges = new THREE.EdgesGeometry(geo);
+            const wireMat = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
+            mesh.add(new THREE.LineSegments(edges, wireMat));
+
+            mesh.position.set(player.posX + dirX * 0.8, CUBE_SIZE / 2, player.posZ + dirZ * 0.8);
+            scene.add(mesh);
+
+            projectiles.push({
+                ownerId: player.id,
+                mesh: mesh,
+                dirX: dirX,
+                dirZ: dirZ,
+                speed: 22.0,
+                life: 3.0,
+                isExplosive: true,
+                explosionRadius: 5.5
+            });
+
+            playSound('shoot');
+        }
+
+        function createExplosion(x, z, radius = 5.2, ownerId = null) {
+            playSound('explosion');
+
+            // Expanding shockwave blast sphere
+            const geo = new THREE.SphereGeometry(0.5, 12, 12);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.9, wireframe: true });
+            const blastMesh = new THREE.Mesh(geo, mat);
+            blastMesh.position.set(x, 0.5, z);
+            scene.add(blastMesh);
+
+            explosionEffects.push({
+                mesh: blastMesh,
+                radius: radius,
+                currentScale: 0.5,
+                life: 0.35,
+                maxLife: 0.35
+            });
+
+            // Bursting particles
+            const particleColors = [0xffd700, 0xff4500, 0xff8c00, 0xffff00, 0xff0055, 0xffffff];
+            for (let i = 0; i < 30; i++) {
+                const pGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                const pColor = particleColors[Math.floor(Math.random() * particleColors.length)];
+                const pMat = new THREE.MeshBasicMaterial({ color: pColor });
+                const pMesh = new THREE.Mesh(pGeo, pMat);
+
+                pMesh.position.set(x, 0.5 + (Math.random() - 0.5) * 0.4, z);
+                scene.add(pMesh);
+
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 5.0 + Math.random() * 12.0;
+                const upSpeed = (Math.random() - 0.2) * 7.0;
+
+                explosionParticles.push({
+                    mesh: pMesh,
+                    vx: Math.cos(angle) * speed,
+                    vy: upSpeed,
+                    vz: Math.sin(angle) * speed,
+                    rotSpeed: (Math.random() - 0.5) * 16,
+                    life: 0.35 + Math.random() * 0.45,
+                    maxLife: 0.8
+                });
+            }
+
+            // PvP Area of Effect (AoE) Damage to Other Players
+            if (selectedGameType === 'PVP_3LIVES' || selectedGameType === 'PVP_INFINITE') {
+                const checkPvpHitPlayer = (player, hpRef, setHp, fragRef, setFrag) => {
+                    if (player.id !== ownerId && hpRef > 0) {
+                        const dist = Math.hypot(x - player.posX, z - player.posZ);
+                        if (dist <= radius) {
+                            const newHp = hpRef - 1;
+                            setHp(newHp);
+                            player.hitFlash = 1.0;
+                            const nx = dist > 0 ? (player.posX - x) / dist : 0;
+                            const nz = dist > 0 ? (player.posZ - z) / dist : 1;
+                            player.slideVelX += nx * 18.0;
+                            player.slideVelZ += nz * 18.0;
+
+                            if (newHp <= 0) {
+                                createExplosion(player.posX, player.posZ, 3.0);
+                                if (ownerId === 1) p1Frags++;
+                                else if (ownerId === 2) p2Frags++;
+                                else if (ownerId === 3) p3Frags++;
+                                else if (ownerId === 4) p4Frags++;
+
+                                if (selectedGameType === 'PVP_INFINITE') {
+                                    if (player.id === 1) p1RespawnTimer = 2.0;
+                                    else if (player.id === 2) p2RespawnTimer = 2.0;
+                                    else if (player.id === 3) p3RespawnTimer = 2.0;
+                                    else if (player.id === 4) p4RespawnTimer = 2.0;
+                                }
+                            }
+                        }
+                    }
+                };
+                checkPvpHitPlayer(p1, p1CoopHp, (v) => p1CoopHp = v);
+                checkPvpHitPlayer(p2, p2CoopHp, (v) => p2CoopHp = v);
+                checkPvpHitPlayer(p3, p3CoopHp, (v) => p3CoopHp = v);
+                checkPvpHitPlayer(p4, p4CoopHp, (v) => p4CoopHp = v);
+            }
+
+            // Area of Effect (AoE) Damage to Enemies
+            for (let j = coopEnemies.length - 1; j >= 0; j--) {
+                const enemy = coopEnemies[j];
+                const dist = Math.hypot(x - enemy.mesh.position.x, z - enemy.mesh.position.z);
+
+                if (dist <= radius) {
+                    const damage = dist < radius * 0.5 ? 3 : 2;
+                    enemy.hp -= damage;
+
+                    const nx = dist > 0 ? (enemy.mesh.position.x - x) / dist : 0;
+                    const nz = dist > 0 ? (enemy.mesh.position.z - z) / dist : 1;
+                    enemy.mesh.position.x += nx * 3.0;
+                    enemy.mesh.position.z += nz * 3.0;
+
+                    if (enemy.hp <= 0) {
+                        coopScore += enemy.maxHp * 50;
+                        scene.remove(enemy.mesh);
+                        enemy.mesh.geometry.dispose();
+                        coopEnemies.splice(j, 1);
+                    }
+                }
+            }
+
+            // Neutralize enemy projectiles caught in blast
+            for (let k = coopEnemyProjectiles.length - 1; k >= 0; k--) {
+                const ep = coopEnemyProjectiles[k];
+                const dist = Math.hypot(x - ep.mesh.position.x, z - ep.mesh.position.z);
+                if (dist <= radius) {
+                    scene.remove(ep.mesh);
+                    ep.mesh.geometry.dispose();
+                    coopEnemyProjectiles.splice(k, 1);
+                }
+            }
+        }
+
+        function clearCoopEntities() {
+            for (let wall of activeWalls) {
+                if (wall.mesh) {
+                    scene.remove(wall.mesh);
+                    if (wall.mesh.geometry) wall.mesh.geometry.dispose();
+                }
+            }
+            activeWalls = [];
+            p3.wallCooldownTimer = 0.0;
+
+            for (let enemy of coopEnemies) {
+                if (enemy.mesh) {
+                    scene.remove(enemy.mesh);
+                    if (enemy.mesh.geometry) enemy.mesh.geometry.dispose();
+                }
+            }
+            coopEnemies = [];
+
+            for (let ep of coopEnemyProjectiles) {
+                if (ep.mesh) {
+                    scene.remove(ep.mesh);
+                    if (ep.mesh.geometry) ep.mesh.geometry.dispose();
+                }
+            }
+            coopEnemyProjectiles = [];
+
+            for (let p of projectiles) {
+                scene.remove(p.mesh);
+                if (p.mesh.geometry) p.mesh.geometry.dispose();
+            }
+            projectiles = [];
+
+            for (let pt of explosionParticles) {
+                if (pt.mesh) {
+                    scene.remove(pt.mesh);
+                    if (pt.mesh.geometry) pt.mesh.geometry.dispose();
+                }
+            }
+            explosionParticles = [];
+
+            for (let eff of explosionEffects) {
+                if (eff.mesh) {
+                    scene.remove(eff.mesh);
+                    if (eff.mesh.geometry) eff.mesh.geometry.dispose();
+                }
+            }
+            explosionEffects = [];
+        }
+
+        function updateCoopHUD() {
+            if (selectedGameType === 'PVP_3LIVES') {
+                hudWave.innerText = `⚔️ PvP (3 VIDAS)`;
+            } else if (selectedGameType === 'PVP_INFINITE') {
+                hudWave.innerText = `♾️ PvP INFINITO`;
+            } else {
+                hudWave.innerText = `🤝 OLEADA: ${coopWave}`;
+            }
+
+            const formatPlayerStatus = (id, name, hp, frags, respawnTimer) => {
+                if (hp > 0) {
+                    const hearts = '❤️'.repeat(hp);
+                    return selectedGameType === 'PVP_INFINITE' ? `${name}: ${hearts} [💀${frags}]` : `${name}: ${hearts}`;
+                } else if (selectedGameType === 'PVP_INFINITE' && respawnTimer > 0) {
+                    return `${name}: ⏳ (${respawnTimer.toFixed(1)}s) [💀${frags}]`;
+                } else {
+                    return `${name}: 💀${selectedGameType === 'PVP_INFINITE' ? ` [💀${frags}]` : ''}`;
+                }
+            };
+
+            const p1Text = formatPlayerStatus(1, 'P1', p1CoopHp, p1Frags, p1RespawnTimer);
+            const p2Text = (gameMode === '2P' || gameMode === '3P' || gameMode === '4P') ? formatPlayerStatus(2, 'P2', p2CoopHp, p2Frags, p2RespawnTimer) : '';
+            const p3Text = (gameMode === '3P' || gameMode === '4P') ? formatPlayerStatus(3, 'P3', p3CoopHp, p3Frags, p3RespawnTimer) : '';
+            const p4Text = gameMode === '4P' ? formatPlayerStatus(4, 'P4', p4CoopHp, p4Frags, p4RespawnTimer) : '';
+            
+            hudHp.innerText = `${p1Text}  ${p2Text}  ${p3Text}  ${p4Text}`.trim();
+            
+            if (selectedGameType === 'PVP_3LIVES') {
+                const aliveCount = (p1CoopHp > 0 ? 1 : 0) + (p2CoopHp > 0 ? 1 : 0) + (p3CoopHp > 0 ? 1 : 0) + (p4CoopHp > 0 ? 1 : 0);
+                hudScore.innerText = `JUGADORES VIVOS: ${aliveCount}`;
+            } else if (selectedGameType === 'PVP_INFINITE') {
+                hudScore.innerText = `LÍDER: ${getTopFragLeader()}`;
+            } else {
+                hudScore.innerText = `PTS: ${coopScore} | ENEMIGOS: ${coopEnemies.length}`;
+            }
+        }
+
+        function getTopFragLeader() {
+            const list = [{ name: 'P1', frags: p1Frags }];
+            if (gameMode !== '1P') list.push({ name: 'P2', frags: p2Frags });
+            if (gameMode === '3P' || gameMode === '4P') list.push({ name: 'P3', frags: p3Frags });
+            if (gameMode === '4P') list.push({ name: 'P4', frags: p4Frags });
+
+            list.sort((a, b) => b.frags - a.frags);
+            if (list[0].frags === 0) return 'NINGUNO (0 FRAGS)';
+            return `${list[0].name} (${list[0].frags} KILLS)`;
+        }
+
+        function respawnPlayerInGame(player) {
+            player.posX = (Math.random() - 0.5) * (MAP_BOUNDARY * 1.2);
+            player.posZ = (Math.random() - 0.5) * (MAP_BOUNDARY * 1.2);
+            player.slideVelX = 0;
+            player.slideVelZ = 0;
+            player.hitFlash = 0.0;
+            player.mesh.position.set(player.posX, CUBE_SIZE / 2, player.posZ);
+            player.mesh.visible = true;
+            if (player.lineMesh) player.lineMesh.visible = true;
+            player.trailPoints = [];
+            addTrailPoint(player, player.posX, player.posZ);
+            playSound('clear');
+        }
+
+        function startCoopMode() {
+            initAudio();
+            gameState = 'PLAYING';
+            gameMode = selectedPlayerMode;
+
+            coopWave = 1;
+            coopScore = 0;
+            p1CoopHp = 3;
+            p2CoopHp = 3;
+            p3CoopHp = 3;
+            p4CoopHp = 3;
+
+            p1Frags = 0;
+            p2Frags = 0;
+            p3Frags = 0;
+            p4Frags = 0;
+
+            p1RespawnTimer = 0;
+            p2RespawnTimer = 0;
+            p3RespawnTimer = 0;
+            p4RespawnTimer = 0;
+
+            waveTransitionTimer = 0;
+
+            coopHUD.style.display = 'flex';
+
+            const isPvP = (selectedGameType === 'PVP_3LIVES' || selectedGameType === 'PVP_INFINITE');
+
+            p1.posX = gameMode === '1P' ? 0 : (gameMode === '4P' ? -8.0 : -6.0);
+            p1.posZ = isPvP ? -6.0 : 0;
+            p1.hitFlash = 0.0;
+            p1.mesh.visible = true;
+            p1.mesh.material.color.setHex(p1.baseColor);
+            p1.trailPoints = [];
+            addTrailPoint(p1, p1.posX, p1.posZ);
+
+            if (gameMode === '2P' || gameMode === '3P' || gameMode === '4P') {
+                p2.posX = gameMode === '2P' ? 6.0 : (gameMode === '4P' ? -2.0 : 0.0);
+                p2.posZ = isPvP ? 6.0 : 0;
+                p2.hitFlash = 0.0;
+                p2.mesh.visible = true;
+                p2.mesh.material.color.setHex(p2.baseColor);
+                if (p2.lineMesh) p2.lineMesh.visible = true;
+                p2.trailPoints = [];
+                addTrailPoint(p2, p2.posX, p2.posZ);
+            } else {
+                p2.mesh.visible = false;
+                if (p2.lineMesh) p2.lineMesh.visible = false;
+            }
+
+            if (gameMode === '3P' || gameMode === '4P') {
+                p3.posX = gameMode === '4P' ? 2.0 : 6.0;
+                p3.posZ = isPvP ? -6.0 : 0;
+                p3.hitFlash = 0.0;
+                p3.mesh.visible = true;
+                p3.mesh.material.color.setHex(p3.baseColor);
+                if (p3.lineMesh) p3.lineMesh.visible = true;
+                p3.trailPoints = [];
+                addTrailPoint(p3, p3.posX, p3.posZ);
+            } else {
+                p3.mesh.visible = false;
+                if (p3.lineMesh) p3.lineMesh.visible = false;
+            }
+
+            if (gameMode === '4P') {
+                p4.posX = 8.0;
+                p4.posZ = isPvP ? 6.0 : 0;
+                p4.hitFlash = 0.0;
+                p4.mesh.visible = true;
+                p4.mesh.material.color.setHex(p4.baseColor);
+                if (p4.lineMesh) p4.lineMesh.visible = true;
+                p4.trailPoints = [];
+                addTrailPoint(p4, p4.posX, p4.posZ);
+            } else {
+                p4.mesh.visible = false;
+                if (p4.lineMesh) p4.lineMesh.visible = false;
+            }
+
+            clearCoopEntities();
+            if (selectedGameType === 'COOP') {
+                spawnCoopWave(coopWave);
+            }
+
+            menuOverlay.classList.add('hidden');
+            gameOverOverlay.classList.add('hidden');
+            menuToggleBtn.style.display = 'block';
+            if (window.innerWidth <= 768) mobileControls.style.display = 'flex';
+            canvas.style.cursor = 'none';
+
+            updateCoopHUD();
+        }
+
+        function spawnCoopWave(wave) {
+            const playerMultiplier = gameMode === '4P' ? 1.8 : (gameMode === '3P' ? 1.5 : (gameMode === '2P' ? 1.2 : 1.0));
+            const count = Math.floor((4 + wave * 2) * playerMultiplier);
+
+            for (let i = 0; i < count; i++) {
+                const side = Math.floor(Math.random() * 4);
+                let x = 0, z = 0;
+                const offset = (Math.random() - 0.5) * MAP_BOUNDARY * 1.8;
+
+                if (side === 0) { x = -MAP_BOUNDARY + 2; z = offset; }
+                else if (side === 1) { x = MAP_BOUNDARY - 2; z = offset; }
+                else if (side === 2) { x = offset; z = -MAP_BOUNDARY + 2; }
+                else { x = offset; z = MAP_BOUNDARY - 2; }
+
+                const randType = Math.random();
+                let type = 'CHASER';
+                let color = 0xff0055;
+                let scale = 0.8;
+                let hp = 1;
+                let speed = 5.0 + Math.min(6.0, wave * 0.4);
+
+                if (randType > 0.65) {
+                    type = 'SHOOTER';
+                    color = 0xffd700;
+                    scale = 0.7;
+                    speed = 3.5;
+                } else if (randType > 0.4 && wave >= 2) {
+                    type = 'CHARGER';
+                    color = 0xff5500;
+                    scale = 1.1;
+                    hp = 2 + Math.floor(wave / 3);
+                    speed = 3.0;
+                }
+
+                let geo;
+                if (type === 'CHASER') geo = new THREE.OctahedronGeometry(scale, 0);
+                else if (type === 'SHOOTER') geo = new THREE.ConeGeometry(scale, scale * 1.5, 4);
+                else geo = new THREE.BoxGeometry(scale, scale, scale);
+
+                const mat = new THREE.MeshBasicMaterial({ color: color });
+                const mesh = new THREE.Mesh(geo, mat);
+
+                const edges = new THREE.EdgesGeometry(geo);
+                const lineMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
+                mesh.add(new THREE.LineSegments(edges, lineMat));
+
+                mesh.position.set(x, scale / 2, z);
+                scene.add(mesh);
+
+                coopEnemies.push({
+                    type: type,
+                    mesh: mesh,
+                    hp: hp,
+                    maxHp: hp,
+                    speed: speed,
+                    vx: 0,
+                    vz: 0,
+                    shootTimer: Math.random() * 2.0,
+                    chargeState: 'IDLE',
+                    scale: scale
+                });
+            }
+        }
+
+        function spawnEnemyProjectile(x, z, dirX, dirZ) {
+            const geo = new THREE.SphereGeometry(0.25, 6, 6);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, 0.5, z);
+            scene.add(mesh);
+
+            coopEnemyProjectiles.push({
+                mesh: mesh,
+                dirX: dirX,
+                dirZ: dirZ,
+                speed: 18.0,
+                life: 3.0
+            });
+        }
+
+        function openMenu() {
+            coopHUD.style.display = 'none';
+            clearCoopEntities();
+            gameState = 'MENU';
+            menuOverlay.classList.remove('hidden');
+            gameOverOverlay.classList.add('hidden');
+            menuToggleBtn.style.display = 'none';
+            mobileControls.style.display = 'none';
+            canvas.style.cursor = 'default';
+        }
+
+        function endCoopGame(winnerMessage = null) {
+            gameState = 'GAME_OVER';
+            coopHUD.style.display = 'none';
+
+            if (selectedGameType === 'PVP_3LIVES' || selectedGameType === 'PVP_INFINITE') {
+                goTitle.innerText = winnerMessage ? `🏆 ${winnerMessage}` : '⚔️ BATALLA CONCLUIDA';
+                goScoreText.innerText = selectedGameType === 'PVP_INFINITE' ? 
+                    `MODO PvP INFINITO FINALIZADO\n${getTopFragLeader()}` : 
+                    `MODO PvP FINALIZADO\n¡TODOS HAN COMBATIDO CON HONOR!`;
+            } else {
+                goTitle.innerText = '¡FIN DEL JUEGO!';
+                goScoreText.innerText = `OLEADA ALCANZADA: ${coopWave}\nPUNTAJE: ${coopScore}`;
+            }
+
+            gameOverOverlay.classList.remove('hidden');
+            menuToggleBtn.style.display = 'none';
+            mobileControls.style.display = 'none';
+            canvas.style.cursor = 'default';
+        }
+
+        function updateCameraPosition(deltaTime) {
+            if (!camera) return;
+
+            if (gameState === 'MENU') {
+                ambientAngle += (deltaTime || 0.016) * 0.3;
+                const radius = 25;
+                camera.position.x = Math.sin(ambientAngle) * radius;
+                camera.position.z = Math.cos(ambientAngle) * radius;
+                camera.position.y = 15;
+                camera.lookAt(0, 0, 0);
+            } else {
+                const activePositions = [];
+                if (p1CoopHp > 0) activePositions.push({ x: p1.posX, z: p1.posZ });
+                if ((gameMode === '2P' || gameMode === '3P' || gameMode === '4P') && p2CoopHp > 0) activePositions.push({ x: p2.posX, z: p2.posZ });
+                if ((gameMode === '3P' || gameMode === '4P') && p3CoopHp > 0) activePositions.push({ x: p3.posX, z: p3.posZ });
+                if (gameMode === '4P' && p4CoopHp > 0) activePositions.push({ x: p4.posX, z: p4.posZ });
+
+                if (activePositions.length === 0) return;
+
+                let avgX = 0, avgZ = 0;
+                for (let pos of activePositions) {
+                    avgX += pos.x;
+                    avgZ += pos.z;
+                }
+                avgX /= activePositions.length;
+                avgZ /= activePositions.length;
+
+                let maxDist = 0;
+                for (let i = 0; i < activePositions.length; i++) {
+                    for (let j = i + 1; j < activePositions.length; j++) {
+                        const dx = activePositions[i].x - activePositions[j].x;
+                        const dz = activePositions[i].z - activePositions[j].z;
+                        const d = Math.hypot(dx, dz);
+                        if (d > maxDist) maxDist = d;
+                    }
+                }
+
+                const zoom = Math.max(1.0, maxDist / 14) * cameraZoomFactor;
+                const camDistance = 15 * zoom;
+                const camHeight = 16 * zoom;
+
+                camera.position.x = THREE.MathUtils.lerp(camera.position.x, avgX + camDistance * 0.707, 0.12);
+                camera.position.z = THREE.MathUtils.lerp(camera.position.z, avgZ + camDistance * 0.707, 0.12);
+                camera.position.y = THREE.MathUtils.lerp(camera.position.y, camHeight, 0.12);
+                camera.lookAt(avgX, 0.5, avgZ);
+            }
+        }
+
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+
+            const aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
+            resizeRenderer();
+            updateCameraPosition(0);
+
+            gridHelper = new THREE.GridHelper(1000, 500, 0x000000, 0xd0d0d0);
+            gridHelper.position.y = -0.01;
+            gridHelper.frustumCulled = false;
+            scene.add(gridHelper);
+
+            const boundGeo = new THREE.BufferGeometry();
+            const b = MAP_BOUNDARY;
+            const boundPoints = [
+                new THREE.Vector3(-b, 0.02, -b), new THREE.Vector3(b, 0.02, -b),
+                new THREE.Vector3(b, 0.02, -b), new THREE.Vector3(b, 0.02, b),
+                new THREE.Vector3(b, 0.02, b), new THREE.Vector3(-b, 0.02, b),
+                new THREE.Vector3(-b, 0.02, b), new THREE.Vector3(-b, 0.02, -b)
+            ];
+            boundGeo.setFromPoints(boundPoints);
+            const boundMat = new THREE.LineBasicMaterial({ color: 0xff0044, linewidth: 3 });
+            const boundLines = new THREE.LineSegments(boundGeo, boundMat);
+            scene.add(boundLines);
+
+            createPlayerObject(p1, 0xffffff, 0x000000, 0x000000);
+            createPlayerObject(p2, 0x000000, 0xffffff, 0x000000);
+            p2.mesh.visible = false;
+            if (p2.lineMesh) p2.lineMesh.visible = false;
+
+            createPlayerObject(p3, 0x00ff88, 0x000000, 0x00ff88);
+            p3.mesh.visible = false;
+            if (p3.lineMesh) p3.lineMesh.visible = false;
+
+            createPlayerObject(p4, 0xffd700, 0x000000, 0xffd700);
+            p4.mesh.visible = false;
+            if (p4.lineMesh) p4.lineMesh.visible = false;
+        }
+
+        function updatePlayerMovement(player, inputX, inputZ, deltaTime) {
+            if (!player || !player.mesh) return;
+
+            if (inputX !== 0 || inputZ !== 0) {
+                let dirX = inputX;
+                let dirZ = inputZ;
+                if (dirX !== 0 && dirZ !== 0) {
+                    const invLen = 0.70710678;
+                    dirX *= invLen;
+                    dirZ *= invLen;
+                }
+
+                player.activeDirX = dirX;
+                player.activeDirZ = dirZ;
+                player.lastFacingX = dirX;
+                player.lastFacingZ = dirZ;
+
+                player.currentSpeed = Math.min(MAX_SPEED, player.currentSpeed + ACCELERATION_RATE * deltaTime);
+
+                player.slideVelX = dirX * player.currentSpeed;
+                player.slideVelZ = dirZ * player.currentSpeed;
+
+                const targetAngle = Math.atan2(dirX, dirZ);
+                player.mesh.rotation.y = THREE.MathUtils.lerp(player.mesh.rotation.y, targetAngle, deltaTime * 12.0);
+            } else {
+                player.activeDirX = 0;
+                player.activeDirZ = 0;
+                player.currentSpeed = BASE_SPEED;
+
+                player.slideVelX = THREE.MathUtils.lerp(player.slideVelX, 0, SLIDE_DECELERATION * deltaTime);
+                player.slideVelZ = THREE.MathUtils.lerp(player.slideVelZ, 0, SLIDE_DECELERATION * deltaTime);
+            }
+
+            let nextX = player.posX + player.slideVelX * deltaTime;
+            let nextZ = player.posZ + player.slideVelZ * deltaTime;
+
+            nextX = Math.max(-MAP_BOUNDARY, Math.min(MAP_BOUNDARY, nextX));
+            nextZ = Math.max(-MAP_BOUNDARY, Math.min(MAP_BOUNDARY, nextZ));
+
+            const moved = (Math.abs(nextX - player.posX) > 0.001 || Math.abs(nextZ - player.posZ) > 0.001);
+
+            player.posX = nextX;
+            player.posZ = nextZ;
+
+            player.mesh.position.x = player.posX;
+            player.mesh.position.z = player.posZ;
+
+            if (player.hitFlash > 0) {
+                player.hitFlash = Math.max(0, player.hitFlash - deltaTime * 2.5);
+                const redColor = new THREE.Color(0xff0000);
+                const baseColor = new THREE.Color(player.baseColor);
+                player.mesh.material.color.copy(redColor).lerp(baseColor, 1.0 - player.hitFlash);
+            } else {
+                player.mesh.material.color.setHex(player.baseColor);
+            }
+
+            if (player.slideVelX !== 0 || player.slideVelZ !== 0) {
+                player.mesh.rotation.z -= player.slideVelX * deltaTime * 0.9;
+                player.mesh.rotation.x += player.slideVelZ * deltaTime * 0.9;
+            } else {
+                player.mesh.rotation.x = THREE.MathUtils.lerp(player.mesh.rotation.x, 0, deltaTime * 5.0);
+                player.mesh.rotation.z = THREE.MathUtils.lerp(player.mesh.rotation.z, 0, deltaTime * 5.0);
+            }
+
+            if (moved) {
+                addTrailPoint(player, player.posX, player.posZ);
+            }
+        }
+
+        function resizeRenderer() {
+            if (!renderer || !camera) return;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width / pixelScale, height / pixelScale, false);
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+        }
+
+        function spawnP3Wall() {
+            if (p3.wallCooldownTimer > 0) return;
+
+            let dirX = p3.activeDirX;
+            let dirZ = p3.activeDirZ;
+
+            if (dirX === 0 && dirZ === 0) {
+                dirX = p3.lastFacingX;
+                dirZ = p3.lastFacingZ;
+            }
+
+            const len = Math.hypot(dirX, dirZ);
+            if (len > 0) {
+                dirX /= len;
+                dirZ /= len;
+            } else {
+                dirZ = -1;
+            }
+
+            const wallWidth = 4.2;
+            const wallHeight = 1.6;
+            const wallDepth = 0.5;
+
+            const spawnDist = 1.8;
+            const wallX = Math.max(-MAP_BOUNDARY + 1, Math.min(MAP_BOUNDARY - 1, p3.posX + dirX * spawnDist));
+            const wallZ = Math.max(-MAP_BOUNDARY + 1, Math.min(MAP_BOUNDARY - 1, p3.posZ + dirZ * spawnDist));
+
+            const geo = new THREE.BoxGeometry(wallWidth, wallHeight, wallDepth);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.85 });
+            const mesh = new THREE.Mesh(geo, mat);
+
+            const edges = new THREE.EdgesGeometry(geo);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x003311, linewidth: 3 });
+            mesh.add(new THREE.LineSegments(edges, lineMat));
+
+            mesh.position.set(wallX, wallHeight / 2, wallZ);
+            mesh.rotation.y = Math.atan2(dirX, dirZ);
+
+            scene.add(mesh);
+
+            activeWalls.push({
+                mesh: mesh,
+                posX: wallX,
+                posZ: wallZ,
+                width: wallWidth,
+                depth: wallDepth,
+                rotationY: mesh.rotation.y,
+                life: 5.0,
+                maxLife: 5.0
+            });
+
+            p3.wallCooldownTimer = 0.0;
+            playSound('clear');
+        }
+
+        function checkWallCollision(px, pz, r, wall) {
+            const dx = px - wall.posX;
+            const dz = pz - wall.posZ;
+            const cos = Math.cos(-wall.rotationY);
+            const sin = Math.sin(-wall.rotationY);
+            const lx = dx * cos - dz * sin;
+            const lz = dx * sin + dz * cos;
+
+            const halfW = wall.width / 2;
+            const halfD = wall.depth / 2;
+
+            const closestX = Math.max(-halfW, Math.min(halfW, lx));
+            const closestZ = Math.max(-halfD, Math.min(halfD, lz));
+
+            const distX = lx - closestX;
+            const distZ = lz - closestZ;
+            return (distX * distX + distZ * distZ) < (r * r);
+        }
+
+        function resolveWallCollision(entity, isPlayer, wall) {
+            const px = isPlayer ? entity.posX : entity.mesh.position.x;
+            const pz = isPlayer ? entity.posZ : entity.mesh.position.z;
+            const radius = isPlayer ? (CUBE_SIZE * 0.5) : ((entity.scale || 0.8) * 0.5);
+
+            const dx = px - wall.posX;
+            const dz = pz - wall.posZ;
+            const rot = wall.rotationY;
+            const cos = Math.cos(-rot);
+            const sin = Math.sin(-rot);
+
+            const lx = dx * cos - dz * sin;
+            const lz = dx * sin + dz * cos;
+
+            const halfW = wall.width / 2;
+            const halfD = wall.depth / 2;
+
+            const closestX = Math.max(-halfW, Math.min(halfW, lx));
+            const closestZ = Math.max(-halfD, Math.min(halfD, lz));
+
+            const distX = lx - closestX;
+            const distZ = lz - closestZ;
+            const distSq = distX * distX + distZ * distZ;
+
+            if (distSq < radius * radius) {
+                let pushLx = 0;
+                let pushLz = 0;
+
+                if (distSq > 0.00001) {
+                    const dist = Math.sqrt(distSq);
+                    const penetration = radius - dist;
+                    pushLx = (distX / dist) * penetration;
+                    pushLz = (distZ / dist) * penetration;
+                } else {
+                    const overlapX = halfW + radius - Math.abs(lx);
+                    const overlapZ = halfD + radius - Math.abs(lz);
+                    if (overlapX < overlapZ) {
+                        pushLx = (lx >= 0 ? 1 : -1) * overlapX;
+                    } else {
+                        pushLz = (lz >= 0 ? 1 : -1) * overlapZ;
+                    }
+                }
+
+                const cosW = Math.cos(rot);
+                const sinW = Math.sin(rot);
+                const pushWx = pushLx * cosW - pushLz * sinW;
+                const pushWz = pushLx * sinW + pushLz * cosW;
+
+                if (isPlayer) {
+                    entity.posX += pushWx;
+                    entity.posZ += pushWz;
+                    entity.slideVelX *= -0.2;
+                    entity.slideVelZ *= -0.2;
+                } else {
+                    entity.mesh.position.x += pushWx;
+                    entity.mesh.position.z += pushWz;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+
+            const deltaTime = Math.min(0.05, (currentTime - lastTime) / 1000);
+            lastTime = currentTime;
+
+            if (gameState === 'MENU') {
+                if (p1.mesh) {
+                    p1.mesh.rotation.y += deltaTime * 0.1;
+                    p1.mesh.rotation.x += deltaTime * 0.04;
+                }
+                updateCameraPosition(deltaTime);
+            } else {
+                if (p3.wallCooldownTimer > 0) {
+                    p3.wallCooldownTimer = Math.max(0, p3.wallCooldownTimer - deltaTime);
+                }
+
+                for (let i = explosionEffects.length - 1; i >= 0; i--) {
+                    const eff = explosionEffects[i];
+                    eff.life -= deltaTime;
+                    const progress = 1.0 - (eff.life / eff.maxLife);
+                    const scale = THREE.MathUtils.lerp(0.5, eff.radius, progress);
+                    eff.mesh.scale.set(scale, scale, scale);
+                    eff.mesh.material.opacity = (eff.life / eff.maxLife) * 0.9;
+
+                    if (eff.life <= 0) {
+                        scene.remove(eff.mesh);
+                        eff.mesh.geometry.dispose();
+                        eff.mesh.material.dispose();
+                        explosionEffects.splice(i, 1);
+                    }
+                }
+
+                for (let i = explosionParticles.length - 1; i >= 0; i--) {
+                    const pt = explosionParticles[i];
+                    pt.life -= deltaTime;
+                    pt.mesh.position.x += pt.vx * deltaTime;
+                    pt.mesh.position.y += pt.vy * deltaTime;
+                    pt.mesh.position.z += pt.vz * deltaTime;
+                    pt.mesh.rotation.x += pt.rotSpeed * deltaTime;
+                    pt.mesh.rotation.y += pt.rotSpeed * deltaTime;
+
+                    const scale = Math.max(0, pt.life / pt.maxLife);
+                    pt.mesh.scale.set(scale, scale, scale);
+
+                    if (pt.life <= 0) {
+                        scene.remove(pt.mesh);
+                        pt.mesh.geometry.dispose();
+                        pt.mesh.material.dispose();
+                        explosionParticles.splice(i, 1);
+                    }
+                }
+
+                // Handle Respawn timers in PvP Infinito Mode
+                if (selectedGameType === 'PVP_INFINITE') {
+                    if (p1CoopHp <= 0 && p1RespawnTimer > 0) {
+                        p1RespawnTimer -= deltaTime;
+                        if (p1RespawnTimer <= 0) { p1CoopHp = 3; respawnPlayerInGame(p1); }
+                    }
+                    if (p2CoopHp <= 0 && p2RespawnTimer > 0) {
+                        p2RespawnTimer -= deltaTime;
+                        if (p2RespawnTimer <= 0) { p2CoopHp = 3; respawnPlayerInGame(p2); }
+                    }
+                    if (p3CoopHp <= 0 && p3RespawnTimer > 0) {
+                        p3RespawnTimer -= deltaTime;
+                        if (p3RespawnTimer <= 0) { p3CoopHp = 3; respawnPlayerInGame(p3); }
+                    }
+                    if (p4CoopHp <= 0 && p4RespawnTimer > 0) {
+                        p4RespawnTimer -= deltaTime;
+                        if (p4RespawnTimer <= 0) { p4CoopHp = 3; respawnPlayerInGame(p4); }
+                    }
+                }
+
+                // PvP Win Check Condition
+                if (selectedGameType === 'PVP_3LIVES') {
+                    let alivePlayers = [];
+                    if (p1CoopHp > 0) alivePlayers.push({ name: 'P1 (BLANCO)', id: 1 });
+                    if ((gameMode === '2P' || gameMode === '3P' || gameMode === '4P') && p2CoopHp > 0) alivePlayers.push({ name: 'P2 (NEGRO)', id: 2 });
+                    if ((gameMode === '3P' || gameMode === '4P') && p3CoopHp > 0) alivePlayers.push({ name: 'P3 (VERDE)', id: 3 });
+                    if (gameMode === '4P' && p4CoopHp > 0) alivePlayers.push({ name: 'P4 (AMARILLO)', id: 4 });
+
+                    if (alivePlayers.length <= 1) {
+                        const winMsg = alivePlayers.length === 1 ? `¡VICTORIA PARA ${alivePlayers[0].name}!` : '¡EMPATE MUTUO!';
+                        endCoopGame(winMsg);
+                        return;
+                    }
+                } else if (selectedGameType === 'COOP') {
+                    let allDefeated = (p1CoopHp <= 0);
+                    if (gameMode === '2P' || gameMode === '3P' || gameMode === '4P') allDefeated = allDefeated && (p2CoopHp <= 0);
+                    if (gameMode === '3P' || gameMode === '4P') allDefeated = allDefeated && (p3CoopHp <= 0);
+                    if (gameMode === '4P') allDefeated = allDefeated && (p4CoopHp <= 0);
+
+                    if (allDefeated) {
+                        endCoopGame();
+                        return;
+                    }
+                }
+
+                if (p1CoopHp <= 0 && p1.mesh && p1.mesh.visible) {
+                    p1.mesh.visible = false;
+                    if (p1.lineMesh) p1.lineMesh.visible = false;
+                }
+                if (p2CoopHp <= 0 && p2.mesh && p2.mesh.visible) {
+                    p2.mesh.visible = false;
+                    if (p2.lineMesh) p2.lineMesh.visible = false;
+                }
+                if (p3CoopHp <= 0 && p3.mesh && p3.mesh.visible) {
+                    p3.mesh.visible = false;
+                    if (p3.lineMesh) p3.lineMesh.visible = false;
+                }
+                if (p4CoopHp <= 0 && p4.mesh && p4.mesh.visible) {
+                    p4.mesh.visible = false;
+                    if (p4.lineMesh) p4.lineMesh.visible = false;
+                }
+
+                for (let i = coopEnemies.length - 1; i >= 0; i--) {
+                    const enemy = coopEnemies[i];
+
+                    let target = null;
+                    let minDist = 999;
+                    if (p1CoopHp > 0) {
+                        const d1 = Math.hypot(p1.posX - enemy.mesh.position.x, p1.posZ - enemy.mesh.position.z);
+                        if (d1 < minDist) { minDist = d1; target = p1; }
+                    }
+                    if ((gameMode === '2P' || gameMode === '3P' || gameMode === '4P') && p2CoopHp > 0) {
+                        const d2 = Math.hypot(p2.posX - enemy.mesh.position.x, p2.posZ - enemy.mesh.position.z);
+                        if (d2 < minDist) { minDist = d2; target = p2; }
+                    }
+                    if ((gameMode === '3P' || gameMode === '4P') && p3CoopHp > 0) {
+                        const d3 = Math.hypot(p3.posX - enemy.mesh.position.x, p3.posZ - enemy.mesh.position.z);
+                        if (d3 < minDist) { minDist = d3; target = p3; }
+                    }
+                    if (gameMode === '4P' && p4CoopHp > 0) {
+                        const d4 = Math.hypot(p4.posX - enemy.mesh.position.x, p4.posZ - enemy.mesh.position.z);
+                        if (d4 < minDist) { minDist = d4; target = p4; }
+                    }
+
+                    if (target) {
+                        const dx = target.posX - enemy.mesh.position.x;
+                        const dz = target.posZ - enemy.mesh.position.z;
+                        const dist = Math.hypot(dx, dz);
+                        const nx = dist > 0 ? dx / dist : 0;
+                        const nz = dist > 0 ? dz / dist : -1;
+
+                        if (enemy.type === 'CHASER') {
+                            enemy.mesh.position.x += nx * enemy.speed * deltaTime;
+                            enemy.mesh.position.z += nz * enemy.speed * deltaTime;
+                            enemy.mesh.rotation.y += deltaTime * 3.0;
+                        } else if (enemy.type === 'SHOOTER') {
+                            if (dist > 8.0) {
+                                enemy.mesh.position.x += nx * enemy.speed * deltaTime;
+                                enemy.mesh.position.z += nz * enemy.speed * deltaTime;
+                            } else if (dist < 5.0) {
+                                enemy.mesh.position.x -= nx * enemy.speed * deltaTime;
+                                enemy.mesh.position.z -= nz * enemy.speed * deltaTime;
+                            }
+                            enemy.mesh.lookAt(target.posX, enemy.mesh.position.y, target.posZ);
+
+                            enemy.shootTimer += deltaTime;
+                            if (enemy.shootTimer >= 2.2) {
+                                enemy.shootTimer = 0;
+                                spawnEnemyProjectile(enemy.mesh.position.x, enemy.mesh.position.z, nx, nz);
+                                playSound('shoot');
+                            }
+                        } else if (enemy.type === 'CHARGER') {
+                            if (enemy.chargeState === 'IDLE') {
+                                enemy.mesh.position.x += nx * enemy.speed * deltaTime;
+                                enemy.mesh.position.z += nz * enemy.speed * deltaTime;
+                                if (dist < 10.0) {
+                                    enemy.chargeState = 'CHARGING';
+                                    enemy.vx = nx * 16.0;
+                                    enemy.vz = nz * 16.0;
+                                }
+                            } else {
+                                enemy.mesh.position.x += enemy.vx * deltaTime;
+                                enemy.mesh.position.z += enemy.vz * deltaTime;
+                                if (Math.abs(enemy.mesh.position.x) > MAP_BOUNDARY || Math.abs(enemy.mesh.position.z) > MAP_BOUNDARY) {
+                                    enemy.chargeState = 'IDLE';
+                                }
+                            }
+                            enemy.mesh.rotation.x += deltaTime * 4;
+                        }
+
+                        if (dist < (CUBE_SIZE / 2 + enemy.scale / 2)) {
+                            if (target === p1 && p1CoopHp > 0) { p1CoopHp -= 1; p1.hitFlash = 1.0; p1.slideVelX += nx * 14; p1.slideVelZ += nz * 14; }
+                            else if (target === p2 && p2CoopHp > 0) { p2CoopHp -= 1; p2.hitFlash = 1.0; p2.slideVelX += nx * 14; p2.slideVelZ += nz * 14; }
+                            else if (target === p3 && p3CoopHp > 0) { p3CoopHp -= 1; p3.hitFlash = 1.0; p3.slideVelX += nx * 14; p3.slideVelZ += nz * 14; }
+                            else if (target === p4 && p4CoopHp > 0) { p4CoopHp -= 1; p4.hitFlash = 1.0; p4.slideVelX += nx * 14; p4.slideVelZ += nz * 14; }
+                            playSound('clear');
+
+                            scene.remove(enemy.mesh);
+                            enemy.mesh.geometry.dispose();
+                            coopEnemies.splice(i, 1);
+                            continue;
+                        }
+                    }
+                }
+
+                for (let i = coopEnemyProjectiles.length - 1; i >= 0; i--) {
+                    const ep = coopEnemyProjectiles[i];
+                    ep.life -= deltaTime;
+                    ep.mesh.position.x += ep.dirX * ep.speed * deltaTime;
+                    ep.mesh.position.z += ep.dirZ * ep.speed * deltaTime;
+
+                    let hitWall = false;
+                    for (let w = 0; w < activeWalls.length; w++) {
+                        if (checkWallCollision(ep.mesh.position.x, ep.mesh.position.z, 0.3, activeWalls[w])) {
+                            hitWall = true;
+                            break;
+                        }
+                    }
+                    if (hitWall) {
+                        playSound('clear');
+                        scene.remove(ep.mesh);
+                        ep.mesh.geometry.dispose();
+                        coopEnemyProjectiles.splice(i, 1);
+                        continue;
+                    }
+
+                    const checkHit = (p, hpRef) => {
+                        if (hpRef > 0 && Math.hypot(ep.mesh.position.x - p.posX, ep.mesh.position.z - p.posZ) < 0.7) {
+                            p.hitFlash = 1.0;
+                            p.slideVelX += ep.dirX * 12;
+                            p.slideVelZ += ep.dirZ * 12;
+                            playSound('clear');
+                            scene.remove(ep.mesh);
+                            ep.mesh.geometry.dispose();
+                            coopEnemyProjectiles.splice(i, 1);
+                            return true;
+                        }
+                        return false;
+                    };
+
+                    if (checkHit(p1, p1CoopHp)) { p1CoopHp--; continue; }
+                    if ((gameMode === '2P' || gameMode === '3P' || gameMode === '4P') && checkHit(p2, p2CoopHp)) { p2CoopHp--; continue; }
+                    if ((gameMode === '3P' || gameMode === '4P') && checkHit(p3, p3CoopHp)) { p3CoopHp--; continue; }
+                    if (gameMode === '4P' && checkHit(p4, p4CoopHp)) { p4CoopHp--; continue; }
+
+                    if (ep.life <= 0 || Math.abs(ep.mesh.position.x) > MAP_BOUNDARY) {
+                        scene.remove(ep.mesh);
+                        ep.mesh.geometry.dispose();
+                        coopEnemyProjectiles.splice(i, 1);
+                    }
+                }
+
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    const proj = projectiles[i];
+                    let exploded = false;
+
+                    // Check PvP Player Hits
+                    if (selectedGameType === 'PVP_3LIVES' || selectedGameType === 'PVP_INFINITE') {
+                        const checkPvpHitPlayer = (player, hpRef, setHp, fragRef, setFrag) => {
+                            if (player.id !== proj.ownerId && hpRef > 0 && player.mesh && player.mesh.visible) {
+                                const dist = Math.hypot(proj.mesh.position.x - player.posX, proj.mesh.position.z - player.posZ);
+                                if (dist < 0.8) {
+                                    if (proj.isExplosive) {
+                                        createExplosion(proj.mesh.position.x, proj.mesh.position.z, proj.explosionRadius, proj.ownerId);
+                                        exploded = true;
+                                    } else {
+                                        const newHp = hpRef - 1;
+                                        setHp(newHp);
+                                        player.hitFlash = 1.0;
+                                        player.slideVelX += proj.dirX * 16.0;
+                                        player.slideVelZ += proj.dirZ * 16.0;
+                                        playSound('clear');
+
+                                        if (newHp <= 0) {
+                                            createExplosion(player.posX, player.posZ, 3.0);
+                                            if (proj.ownerId === 1) p1Frags++;
+                                            else if (proj.ownerId === 2) p2Frags++;
+                                            else if (proj.ownerId === 3) p3Frags++;
+                                            else if (proj.ownerId === 4) p4Frags++;
+
+                                            if (selectedGameType === 'PVP_INFINITE') {
+                                                if (player.id === 1) p1RespawnTimer = 2.0;
+                                                else if (player.id === 2) p2RespawnTimer = 2.0;
+                                                else if (player.id === 3) p3RespawnTimer = 2.0;
+                                                else if (player.id === 4) p4RespawnTimer = 2.0;
+                                            }
+                                        }
+                                    }
+                                    scene.remove(proj.mesh);
+                                    proj.mesh.geometry.dispose();
+                                    projectiles.splice(i, 1);
+                                    return true;
+                                }
+                            }
+                            return false;
+                        };
+
+                        if (checkPvpHitPlayer(p1, p1CoopHp, (v) => p1CoopHp = v)) continue;
+                        if (checkPvpHitPlayer(p2, p2CoopHp, (v) => p2CoopHp = v)) continue;
+                        if (checkPvpHitPlayer(p3, p3CoopHp, (v) => p3CoopHp = v)) continue;
+                        if (checkPvpHitPlayer(p4, p4CoopHp, (v) => p4CoopHp = v)) continue;
+                    }
+
+                    // Check Enemy Hits
+                    for (let j = coopEnemies.length - 1; j >= 0; j--) {
+                        const enemy = coopEnemies[j];
+                        const dist = Math.hypot(proj.mesh.position.x - enemy.mesh.position.x, proj.mesh.position.z - enemy.mesh.position.z);
+
+                        if (dist < (enemy.scale + 0.3)) {
+                            if (proj.isExplosive) {
+                                createExplosion(proj.mesh.position.x, proj.mesh.position.z, proj.explosionRadius, proj.ownerId);
+                                exploded = true;
+                            } else {
+                                enemy.hp -= 1;
+                                enemy.mesh.position.x += proj.dirX * 1.5;
+                                enemy.mesh.position.z += proj.dirZ * 1.5;
+
+                                if (enemy.hp <= 0) {
+                                    coopScore += enemy.maxHp * 50;
+                                    scene.remove(enemy.mesh);
+                                    enemy.mesh.geometry.dispose();
+                                    coopEnemies.splice(j, 1);
+                                    playSound('shoot');
+                                }
+                            }
+
+                            scene.remove(proj.mesh);
+                            proj.mesh.geometry.dispose();
+                            projectiles.splice(i, 1);
+                            break;
+                        }
+                    }
+
+                    if (exploded) continue;
+                }
+
+                if (selectedGameType === 'COOP' && coopEnemies.length === 0) {
+                    waveTransitionTimer += deltaTime;
+                    if (waveTransitionTimer > 1.5) {
+                        waveTransitionTimer = 0;
+                        coopWave += 1;
+                        coopScore += 200;
+                        if (p1CoopHp > 0 && p1CoopHp < 3) p1CoopHp += 1;
+                        if (p2CoopHp > 0 && p2CoopHp < 3) p2CoopHp += 1;
+                        if (p3CoopHp > 0 && p3CoopHp < 3) p3CoopHp += 1;
+                        if (p4CoopHp > 0 && p4CoopHp < 3) p4CoopHp += 1;
+                        spawnCoopWave(coopWave);
+                    }
+                }
+
+                updateCoopHUD();
+
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    const p = projectiles[i];
+                    p.life -= deltaTime;
+                    p.mesh.position.x += p.dirX * p.speed * deltaTime;
+                    p.mesh.position.z += p.dirZ * p.speed * deltaTime;
+                    p.mesh.rotation.x += deltaTime * 10;
+                    p.mesh.rotation.y += deltaTime * 10;
+
+                    let hitWall = false;
+                    for (let w = 0; w < activeWalls.length; w++) {
+                        if (checkWallCollision(p.mesh.position.x, p.mesh.position.z, 0.3, activeWalls[w])) {
+                            hitWall = true;
+                            break;
+                        }
+                    }
+
+                    if (hitWall || p.life <= 0 || Math.abs(p.mesh.position.x) > MAP_BOUNDARY + 10 || Math.abs(p.mesh.position.z) > MAP_BOUNDARY + 10) {
+                        if (p.isExplosive) {
+                            createExplosion(p.mesh.position.x, p.mesh.position.z, p.explosionRadius);
+                        } else {
+                            playSound('clear');
+                        }
+                        scene.remove(p.mesh);
+                        p.mesh.geometry.dispose();
+                        projectiles.splice(i, 1);
+                    }
+                }
+
+                const handleWallCollision = (entity, isPlayer = true) => {
+                    if (!entity || (!isPlayer && (!entity.mesh || !entity.mesh.visible))) return;
+                    for (let w = 0; w < activeWalls.length; w++) {
+                        resolveWallCollision(entity, isPlayer, activeWalls[w]);
+                    }
+                };
+
+                handleWallCollision(p1, true);
+                if (gameMode === '2P' || gameMode === '3P' || gameMode === '4P') handleWallCollision(p2, true);
+                if (gameMode === '3P' || gameMode === '4P') handleWallCollision(p3, true);
+                if (gameMode === '4P') handleWallCollision(p4, true);
+                for (let enemy of coopEnemies) handleWallCollision(enemy, false);
+
+                let p1InputX = 0, p1InputZ = 0;
+                if (keysPressed['KeyW'] || keysPressed['w'] || keysPressed['W']) p1InputZ -= 1;
+                if (keysPressed['KeyS'] || keysPressed['s'] || keysPressed['S']) p1InputZ += 1;
+                if (keysPressed['KeyA'] || keysPressed['a'] || keysPressed['A']) p1InputX -= 1;
+                if (keysPressed['KeyD'] || keysPressed['d'] || keysPressed['D']) p1InputX += 1;
+
+                if (gameMode === '1P') {
+                    if (keysPressed['ArrowUp']) p1InputZ -= 1;
+                    if (keysPressed['ArrowDown']) p1InputZ += 1;
+                    if (keysPressed['ArrowLeft']) p1InputX -= 1;
+                    if (keysPressed['ArrowRight']) p1InputX += 1;
+                }
+
+                if (p1CoopHp > 0) {
+                    updatePlayerMovement(p1, p1InputX, p1InputZ, deltaTime);
+                }
+
+                if (gameMode === '2P' || gameMode === '3P' || gameMode === '4P') {
+                    let p2InputX = 0, p2InputZ = 0;
+                    if (keysPressed['ArrowUp']) p2InputZ -= 1;
+                    if (keysPressed['ArrowDown']) p2InputZ += 1;
+                    if (keysPressed['ArrowLeft']) p2InputX -= 1;
+                    if (keysPressed['ArrowRight']) p2InputX += 1;
+
+                    if (p2CoopHp > 0) {
+                        updatePlayerMovement(p2, p2InputX, p2InputZ, deltaTime);
+                    }
+                }
+
+                if (gameMode === '3P' || gameMode === '4P') {
+                    let p3InputX = 0, p3InputZ = 0;
+                    if (keysPressed['5'] || keysPressed['Digit5'] || keysPressed['Numpad5']) p3InputZ -= 1;
+                    if (keysPressed['2'] || keysPressed['Digit2'] || keysPressed['Numpad2']) p3InputZ += 1;
+                    if (keysPressed['1'] || keysPressed['Digit1'] || keysPressed['Numpad1']) p3InputX -= 1;
+                    if (keysPressed['3'] || keysPressed['Digit3'] || keysPressed['Numpad3']) p3InputX += 1;
+
+                    if (p3CoopHp > 0) {
+                        updatePlayerMovement(p3, p3InputX, p3InputZ, deltaTime);
+                    }
+                }
+
+                if (gameMode === '4P') {
+                    let p4InputX = 0, p4InputZ = 0;
+                    if (keysPressed['i'] || keysPressed['I'] || keysPressed['KeyI']) p4InputZ -= 1;
+                    if (keysPressed['k'] || keysPressed['K'] || keysPressed['KeyK']) p4InputZ += 1;
+                    if (keysPressed['j'] || keysPressed['J'] || keysPressed['KeyJ']) p4InputX -= 1;
+                    if (keysPressed['l'] || keysPressed['L'] || keysPressed['KeyL']) p4InputX += 1;
+
+                    if (p4CoopHp > 0) {
+                        updatePlayerMovement(p4, p4InputX, p4InputZ, deltaTime);
+                    }
+                }
+
+                const handlePlayerCollision = (plA, plB) => {
+                    if (!plA || !plB || !plA.mesh || !plB.mesh || !plA.mesh.visible || !plB.mesh.visible) return;
+                    const dx = plB.posX - plA.posX;
+                    const dz = plB.posZ - plA.posZ;
+                    const dist = Math.hypot(dx, dz);
+                    const minDist = CUBE_SIZE * 0.95;
+
+                    if (dist < minDist && dist > 0.0001) {
+                        const nx = dx / dist;
+                        const nz = dz / dist;
+                        const overlap = 0.5 * (minDist - dist);
+
+                        plA.posX -= nx * overlap;
+                        plA.posZ -= nz * overlap;
+                        plB.posX += nx * overlap;
+                        plB.posZ += nz * overlap;
+
+                        const BOUNCE_IMPULSE = 15.0;
+                        plA.slideVelX -= nx * BOUNCE_IMPULSE;
+                        plA.slideVelZ -= nz * BOUNCE_IMPULSE;
+                        plB.slideVelX += nx * BOUNCE_IMPULSE;
+                        plB.slideVelZ += nz * BOUNCE_IMPULSE;
+
+                        plA.hitFlash = 0.5;
+                        plB.hitFlash = 0.5;
+                        playSound('clear');
+                    }
+                };
+
+                if (gameMode === '2P' || gameMode === '3P' || gameMode === '4P') handlePlayerCollision(p1, p2);
+                if (gameMode === '3P' || gameMode === '4P') {
+                    handlePlayerCollision(p1, p3);
+                    handlePlayerCollision(p2, p3);
+                }
+                if (gameMode === '4P') {
+                    handlePlayerCollision(p1, p4);
+                    handlePlayerCollision(p2, p4);
+                    handlePlayerCollision(p3, p4);
+                }
+
+                updateCameraPosition(deltaTime);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            keysPressed[e.key] = true;
+            keysPressed[e.code] = true;
+
+            if (e.key === 'Escape') {
+                if (gameState !== 'MENU') openMenu();
+            }
+
+            if (gameState === 'PLAYING') {
+                if ((e.key === 'e' || e.key === 'E' || e.code === 'KeyE') && p1CoopHp > 0) {
+                    shootProjectile(p1, 0xffffff, 0x000000);
+                }
+                if ((e.key === ' ' || e.code === 'Space') && p1CoopHp > 0) {
+                    clearTrail(p1);
+                }
+
+                if ((gameMode === '2P' || gameMode === '3P' || gameMode === '4P') && p2CoopHp > 0) {
+                    if (e.key === 'm' || e.key === 'M' || e.code === 'KeyM') {
+                        shootProjectile(p2, 0x000000, 0xffffff);
+                    }
+                    if (e.key === 'n' || e.key === 'N' || e.code === 'KeyN' || e.key === 'Shift' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+                        clearTrail(p2);
+                    }
+                }
+
+                if ((gameMode === '3P' || gameMode === '4P') && p3CoopHp > 0) {
+                    if (e.key === '0' || e.code === 'Digit0' || e.code === 'Numpad0') {
+                        spawnP3Wall();
+                    }
+                    if (e.key === '.' || e.code === 'NumpadDecimal' || e.code === 'Period' || e.code === 'Delete') {
+                        clearTrail(p3);
+                    }
+                }
+
+                if (gameMode === '4P' && p4CoopHp > 0) {
+                    if (e.key === 'u' || e.key === 'U' || e.code === 'KeyU') {
+                        shootProjectile(p4, 0xffd700, 0x000000);
+                    }
+                    if (e.key === 'o' || e.key === 'O' || e.code === 'KeyO') {
+                        shootExplosiveProjectile(p4);
+                    }
+                    if (e.key === 'p' || e.key === 'P' || e.code === 'KeyP') {
+                        clearTrail(p4);
+                    }
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keysPressed[e.key] = false;
+            keysPressed[e.code] = false;
+        });
+
+        window.addEventListener('resize', () => {
+            resizeRenderer();
+            updateCameraPosition(0);
+        });
+
+        window.onload = function() {
+            initScene();
+            updateMenuUI();
+            lastTime = performance.now();
+            requestAnimationFrame(animate);
+        };
+    </script>
+</body>
+</html>
